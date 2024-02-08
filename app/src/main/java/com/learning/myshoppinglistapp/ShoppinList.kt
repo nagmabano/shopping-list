@@ -119,7 +119,7 @@ fun ShoppingListItem(
         )) {
         Text(text = item.name, modifier = Modifier.padding(8.dp))
         Text(text = "Qty: ${item.quantity}", modifier = Modifier.padding(8.dp))
-        Row {
+        Row(modifier = Modifier.padding(8.dp)) {
             IconButton(onClick = onEditClick ) {
                 Icon(imageVector = Icons.Default.Edit, contentDescription = null)
             }
