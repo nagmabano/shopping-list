@@ -34,12 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-data class ShoppingItem(val id:Int, val name: String,
-                        var quantity: Int, var editable: Boolean = false)
+data class ShoppingItem(val id:Int, var name: String,
+                        var quantity: Int, var isEditing: Boolean = false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun shoppingListApp() {
+fun ShoppingListApp() {
     var sItems by remember { mutableStateOf(listOf<ShoppingItem>()) }
     var showDialog by remember { mutableStateOf(false) }
     var itemName by remember { mutableStateOf("") }
@@ -55,7 +55,25 @@ fun shoppingListApp() {
             .fillMaxSize()
             .padding(16.dp)) {
             items(sItems){
-                ShoppingListItem(it, {}, {})
+                item ->
+                if(item.isEditing) {
+                    ShoppingItemEditor(item = item , onEditComplete = {
+                        editedName, editedQty ->
+                        sItems = sItems.map { it.copy(isEditing = false) }
+                        val editedItem = sItems.find { it.id == item.id }
+                        editedItem?.let {
+                            it.name = editedName
+                            it.quantity = editedQty
+                        }
+                    })
+                } else {
+                    ShoppingListItem(item = item, onEditClick = {
+                        // finding out which item we are editing and changing
+                        sItems = sItems.map { it.copy(isEditing = it.id == item.id) }
+                    }, onDeleteClick = {
+                        sItems = sItems - item
+                    })
+                }
             }
         }
     }
@@ -112,7 +130,7 @@ fun shoppingListApp() {
 fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String,Int) -> Unit) {
     var editedName by remember { mutableStateOf(item.name) }
     var editedQty by remember { mutableStateOf(item.quantity.toString()) }
-    var isEditing by remember { mutableStateOf(item.editable) }
+    var isEditing by remember { mutableStateOf(item.isEditing) }
 
     Row(modifier = Modifier
         .fillMaxWidth()
@@ -127,8 +145,7 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String,Int) -> Unit)
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
-                ) {
-            }
+                )
             BasicTextField(
                 value = editedQty,
                 onValueChange = {editedQty = it},
@@ -136,10 +153,9 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String,Int) -> Unit)
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
-            ) {
-            }
+            )
         }
-        
+
         Button(onClick = {
             isEditing = false
             onEditComplete(editedName, editedQty.toIntOrNull() ?: 1)
@@ -149,6 +165,7 @@ fun ShoppingItemEditor(item: ShoppingItem, onEditComplete: (String,Int) -> Unit)
 
     }
 }
+
 @Composable
 fun ShoppingListItem(
     item: ShoppingItem,
@@ -161,7 +178,8 @@ fun ShoppingListItem(
         .border(
             border = BorderStroke(2.dp, Color(0XFF018786)),
             shape = RoundedCornerShape(20)
-        )) {
+        ),
+        horizontalArrangement = Arrangement.SpaceBetween) {
         Text(text = item.name, modifier = Modifier.padding(8.dp))
         Text(text = "Qty: ${item.quantity}", modifier = Modifier.padding(8.dp))
         Row(modifier = Modifier.padding(8.dp)) {
