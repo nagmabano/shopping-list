@@ -38,6 +38,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
+import android.Manifest
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+
+
 data class ShoppingItem(val id:Int,
                         var name: String,
                         var quantity: Int,
@@ -58,6 +65,35 @@ fun ShoppingListApp(
     var showDialog by remember { mutableStateOf(false) }
     var itemName by remember { mutableStateOf("") }
     var itemQuantity by remember { mutableStateOf("") }
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = {
+                permissions ->
+            if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                // I have access to location
+                locationUtils.requestLocationUpdates(viewModel = viewModel)
+            } else {
+                // Ask for permission
+                val rationalRequired = ActivityCompat.shouldShowRequestPermissionRationale(
+                    context as MainActivity,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) || ActivityCompat.shouldShowRequestPermissionRationale(
+                    context as MainActivity,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+
+                if (rationalRequired) {
+                    Toast.makeText(context, "Location permission is required for this feature to work",
+                        Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Location permission is required for this feature." +
+                            "Please enable it in android settings",
+                        Toast.LENGTH_LONG).show()
+                }
+            }
+        })
 
     Column (modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -133,6 +169,21 @@ fun ShoppingListApp(
                         singleLine = true, modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp))
+                    Button(onClick = {
+                        if (locationUtils.hasLocationPermission(context)) {
+                            locationUtils.requestLocationUpdates(viewModel)
+                            navController.navigate("locationScreen") {
+                                this.launchSingleTop
+                            }
+                        } else {
+                            requestPermissionLauncher.launch(arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            ))
+                        }
+                    }) {
+                        Text(text = "Address")
+                    }
                 }
             }
 
