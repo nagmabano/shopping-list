@@ -18,7 +18,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
-fun locationSelectionScreen(
+fun LocationSelectionScreen(
     location: LocationData,
     onLocationSelected: (LocationData) -> Unit
 ) {
